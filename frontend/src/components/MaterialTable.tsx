@@ -1,19 +1,25 @@
-import React, { useCallback, useContext, useMemo, useReducer, useState } from 'react'
-import { Batch, updateBatch, useBatches } from '../redux/useBatches'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Batch, removeBatch, updateBatch, useBatches } from '../redux/useBatches'
 import { MdLocalShipping, MdVideoLabel } from 'react-icons/md'
 import { BiCylinder } from 'react-icons/bi'
 import SegmentedControl from './SegmentedControl';
 import _ from 'lodash';
-import { doc, WriteBatch, writeBatch } from '@firebase/firestore';
+import { doc, WriteBatch } from '@firebase/firestore';
 import { db } from '../firebase';
-import { updateDoc } from 'firebase/firestore';
 import Loading from './Loading';
 import { Flipped, Flipper } from 'react-flip-toolkit';
+import { BsFillTrash3Fill } from 'react-icons/bs';
+import ProgressCircle from './Util/ProgressCircle';
+import { resetWriteBatch, useWriteBatch } from '../redux/useWriteBatch';
+import { useLine } from '../redux/useLine';
 
 export default function MaterialTable() {
     const batches = useBatches();
+    const line = useLine();
+    const { writeBatch, immediate } = useWriteBatch();
 
-    const [pendingUpdates, setPendingUpdates] = useState<Batch[]>([]);
+    const [archiveBtnRect, setArchiveBtnRect] = useState<DOMRect>();
+    const [confirmArchive, setConfirmArchive] = useState("");
 
     const sortedBatches = batches.sort((a, b) => {
         if (a.plan < b.plan) return -1;
@@ -22,30 +28,54 @@ export default function MaterialTable() {
     })
 
     const updateBatchDB = useCallback((batch: WriteBatch) => {
-        // const batchRef = doc(db, "po07", batch.id);
-        // updateDoc(batchRef, {
-        //     ...batch
-        // });
+        console.log("Updating batch")
         batch.commit();
+        resetWriteBatch();
     }, [])
 
     const debouncedUpdate = useMemo(() => {
         return _.debounce(updateBatchDB, 5000)
     }, [updateBatchDB])
 
-    function handleChange(batch: Batch, key: string, value: string | boolean) {
+    function handleChange(batch: Batch, key: string, value: string | boolean, instant = false) {
         const newBatch = {
             ...batch,
             [key]: value
         }
-        const fbBatch = writeBatch(db);
         if (!batch.id) return;
-        fbBatch.update(doc(db, "po07", batch.id), {
+        writeBatch.update(doc(db, line, batch.id), {
             [key]: value
         })
         updateBatch(newBatch);
-        debouncedUpdate(fbBatch);
+        instant && updateBatchDB(writeBatch);
+        !instant && debouncedUpdate(writeBatch);
     }
+
+    useEffect(() => {
+        if (immediate) {
+            updateBatchDB(writeBatch);
+            debouncedUpdate.cancel();
+        }
+    }, [immediate])
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            const batch = batches.find((batch) => batch.id === confirmArchive);
+            if (batch) {
+                removeBatch(batch);
+                handleChange(batch, "archived", true, true);
+            }
+            setConfirmArchive("");
+        }, 1000);
+        return () => clearTimeout(timeout);
+    }, [confirmArchive, batches, handleChange])
+
+    useEffect(() => {
+        const removeButton = document.getElementById("remove-" + confirmArchive);
+        if (removeButton) {
+            setArchiveBtnRect(removeButton.getBoundingClientRect());
+        }
+    }, [confirmArchive])
 
     return (
         <div className="p-5">
@@ -58,6 +88,7 @@ export default function MaterialTable() {
                         <col className="w-1/6" />
                         <col className="w-[12%]" />
                         <col className="w-[12%]" />
+                        <col className="w-[5%]" />
                     </colgroup>
                     <thead>
                         <tr>
@@ -67,6 +98,7 @@ export default function MaterialTable() {
                             <th>Planerad start</th>
                             <th>Etiketter</th>
                             <th>Täckpapper</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,6 +109,7 @@ export default function MaterialTable() {
                                 <td><Loading /></td>
                                 <td><Loading flipped /></td>
                                 <td><Loading /></td>
+                                <td><Loading /></td>
                                 <td><Loading flipped /></td>
                             </tr>
                         }
@@ -85,6 +118,7 @@ export default function MaterialTable() {
                                 <tr>
                                     <td>
                                         <textarea
+                                            id={`batch-${batch.id}`}
                                             value={batch.batch}
                                             placeholder="Batch"
                                             rows={1}
@@ -97,7 +131,10 @@ export default function MaterialTable() {
                                             placeholder="Land"
                                             rows={1}
                                             maxLength={2}
-                                            onChange={(e) => { handleChange(batch, "country", e.target.value) }}
+                                            onChange={(e) => {
+                                                typeof e.target.value === 'string' &&
+                                                    handleChange(batch, "country", e.target.value.toUpperCase())
+                                            }}
                                             className="resize-none text-center font-semibold bg-transparent h-fit" />
                                     </td>
                                     <td>
@@ -109,16 +146,7 @@ export default function MaterialTable() {
                                             />}
                                         />
                                     </td>
-                                    <td className='relative'>
-                                        {/* <textarea
-                                    value={batch.plan}
-                                    placeholder="Planerad start"
-                                    rows={1}
-                                    onFocus={() => setPlanFocus(true)}
-                                    onBlur={() => setPlanFocus(false)}
-                                    onChange={(e) => { handleChange(batch, "plan", e.target.value) }}
-                                    className="resize-none font-semibold bg-transparent h-fit"
-                                /> */}
+                                    <td className=''>
                                         <input type="date" className={`w-full h-full bg-transparent`} onChange={(e) => { handleChange(batch, "plan", e.target.value) }} value={batch.plan} />
                                     </td>
                                     <td>
@@ -139,14 +167,43 @@ export default function MaterialTable() {
                                             icon={<BiCylinder className="fill-gray-800" />}
                                         />
                                     </td>
-                                    {/* <td><MdVideoLabel className={`${batch.etik ? "fill-green-500" : "fill-yellow-400"}`} /></td>
-                            <td><BiCylinder className={`${batch.etik ? "fill-green-500" : "fill-yellow-400"}`} /></td> */}
+                                    <td className='p-0 relative' id={"remove-" + batch.id}>
+                                        <button
+                                            onMouseDown={() => !confirmArchive && batch.id && setConfirmArchive(batch.id)}
+                                            onMouseUp={() => confirmArchive && setConfirmArchive("")}
+                                            className="relative full min-h-full py-4">
+                                            <div className="full flex flex-col justify-center items-center">
+                                                <BsFillTrash3Fill className='text-xl fill-red-500' />
+                                            </div>
+                                            <div className={`absolute top-0 left-0 w-full h-full flex justify-center items-center transition-all duration-300 ${confirmArchive === batch.id ? "opacity-100" : "opacity-0"}`}>
+                                                <ProgressCircle
+                                                    progress={confirmArchive === batch.id ? 100 : 0}
+                                                    color="bg-blue-300"
+                                                    size='sm'
+                                                />
+                                            </div>
+                                        </button>
+                                        <div className={`absolute z-10 -top-3/4 right-3 w-[300%] py-1 px-2 accentBG3 border border-gray-800 h-fit flex justify-center items-center transition-all rounded-md pointer-events-none shadow-xl ${confirmArchive === batch.id ? "opacity-100" : "opacity-0"}`}>
+                                            Håll in för att ta bort
+                                        </div>
+                                    </td>
                                 </tr>
                             </Flipped>
                         ))}
                     </tbody>
                 </table>
             </Flipper>
+            {/* <div
+                id='archiveBtn'
+                className={`absolute p-2 flex accentBG2 w-fit border border-gray-800 justify-center items-center transition-all duration-300 ${confirmArchive !== "" ? "opacity-100" : "opacity-0"}`}
+                style={{
+                    // transform: `translate(${archiveBtnRect ? -archiveBtnRect.left : 0}px, ${archiveBtnRect ? -archiveBtnRect.top : 0}px)`
+                    transform: `translate(${archiveBtnRect.left - (document.getElementById("archiveBtn")?.offsetWidth / 2)}px, ${archiveBtnRect.top - document.getElementById("archiveBtn")?.offsetHeight}px)`
+
+                }}
+            >
+                Håll in för att ta bort
+            </div> */}
         </div>
     )
 }

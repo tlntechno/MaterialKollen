@@ -4,10 +4,12 @@ import Layout from "./components/Layout";
 import MaterialTable from "./components/MaterialTable";
 import { db } from "./firebase";
 import { setBatches } from "./redux/useBatches";
+import { setLine, useLine } from "./redux/useLine";
 
 export default function App() {
+    const line = useLine();
     useEffect(() => {
-        const queryRef = query(collection(db, "po07"), where("archived", "==", false));
+        const queryRef = query(collection(db, line), where("archived", "==", false));
         const unsubscribe = onSnapshot(queryRef, (querySnapshot) => {
             const batches: DocumentData[] = [];
             querySnapshot.forEach((doc) => {
@@ -16,13 +18,22 @@ export default function App() {
                     ...doc.data()
                 }
                 batches.push(newBatch);
-                console.log(`${doc.id} => ${doc.data()}`);
             });
-            console.log(batches);
             setBatches(batches);
         });
         return unsubscribe;
+    }, [line])
+
+    useEffect(() => {
+        const line = localStorage.getItem("line");
+        if (line) {
+            setLine(line);
+        } else {
+            localStorage.setItem("line", "po07");
+            setLine("po07");
+        }
     }, [])
+
     return (
         <Layout>
             <main>

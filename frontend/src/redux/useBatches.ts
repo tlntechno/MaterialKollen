@@ -1,8 +1,8 @@
-import { addDoc, collection, CollectionReference, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import { createReduxModule } from "hooks-for-redux";
-import { useMemo } from "react";
 import { db } from "../firebase";
 import _ from "lodash";
+import { triggerImmediate, wbSet } from "./useWriteBatch";
 
 export interface Batch {
     id?: string;
@@ -34,12 +34,9 @@ export function handleChange(batch: Batch, field: string, value: any) {
     updateBatch(newBatch);
 }
 
-export async function dbAddBatch() {
-    const id = await addDoc(collection(db, "po07"), initialBatch)
-        .then((docRef) => {
-            console.log("Document written with ID: ", docRef.id, docRef);
-            return docRef.id;
-        })
+export async function dbAddBatch(line: string) {
+    wbSet({ doc: doc(collection(db, line)), data: initialBatch });
+    triggerImmediate(true);
 }
 
 export const [useBatches, { setBatches, updateBatch, addBatch, removeBatch }] = createReduxModule("batches", initialState, {
@@ -49,8 +46,6 @@ export const [useBatches, { setBatches, updateBatch, addBatch, removeBatch }] = 
     updateBatch: (state, payload) => {
         const newBatches = state.map((batch) => {
             if (batch.id === payload.id) {
-                console.log("Updating batch", batch, payload);
-
                 return payload;
             }
             return batch;
@@ -62,8 +57,7 @@ export const [useBatches, { setBatches, updateBatch, addBatch, removeBatch }] = 
         return [...state, initialBatch];
     },
     removeBatch: (state, payload) => {
-        // const newBatches = state.filter((batch) => batch.id !== payload.id);
-        // return newBatches;
-        return state
+        const newBatches = state.filter((batch) => batch.id !== payload.id);
+        return newBatches;
     },
 });

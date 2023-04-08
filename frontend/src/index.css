@@ -33,6 +33,10 @@ body {
 	.accentBG2 {
 		@apply bg-gray-300 dark:bg-gray-600 text;
 	}
+
+	.accentBG3 {
+		@apply bg-gray-400 dark:bg-gray-500 text;
+	}
 	.text {
 		@apply text-gray-900 dark:text-gray-100;
 	}
@@ -74,6 +78,11 @@ thead tr th {
 
 th {
 	@apply px-3 py-2 font-bold mainBG whitespace-nowrap;
+}
+
+tr td:nth-child(5),
+tr td:nth-child(6) {
+	@apply text-right;
 }
 
 td {
