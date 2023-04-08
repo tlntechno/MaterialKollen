@@ -27,7 +27,10 @@ export const initialBatch: Batch = {
     archived: false,
 }
 
-const initialState: Batch[] = [];
+const initialState: { batches: Batch[], hydrated: boolean } = {
+    batches: [],
+    hydrated: false
+}
 
 export function handleChange(batch: Batch, field: string, value: any) {
     const newBatch = { ...batch, [field]: value };
@@ -41,23 +44,36 @@ export async function dbAddBatch(line: string) {
 
 export const [useBatches, { setBatches, updateBatch, addBatch, removeBatch }] = createReduxModule("batches", initialState, {
     setBatches: (state, payload) => {
-        return payload;
+        return {
+            ...state,
+            batches: payload,
+            hydrated: true
+        }
     },
     updateBatch: (state, payload) => {
-        const newBatches = state.map((batch) => {
+        const newBatches = state.batches.map((batch) => {
             if (batch.id === payload.id) {
                 return payload;
             }
             return batch;
         })
-        return newBatches;
+        return {
+            ...state,
+            batches: newBatches
+        }
     },
     addBatch: (state) => {
         // initialBatch.id = state.length;
-        return [...state, initialBatch];
+        return {
+            ...state,
+            batches: [...state.batches, initialBatch]
+        }
     },
     removeBatch: (state, payload) => {
-        const newBatches = state.filter((batch) => batch.id !== payload.id);
-        return newBatches;
+        const newBatches = state.batches.filter((batch) => batch.id !== payload.id);
+        return {
+            ...state,
+            batches: newBatches
+        }
     },
 });

@@ -14,7 +14,7 @@ import { resetWriteBatch, useWriteBatch } from '../redux/useWriteBatch';
 import { useLine } from '../redux/useLine';
 
 export default function MaterialTable() {
-    const batches = useBatches();
+    const { batches, hydrated } = useBatches();
     const line = useLine();
     const { writeBatch, immediate } = useWriteBatch();
 
@@ -102,7 +102,7 @@ export default function MaterialTable() {
                         </tr>
                     </thead>
                     <tbody>
-                        {sortedBatches.length === 0 &&
+                        {sortedBatches.length === 0 && !hydrated &&
                             <tr>
                                 <td><Loading /></td>
                                 <td><Loading flipped /></td>
@@ -111,6 +111,12 @@ export default function MaterialTable() {
                                 <td><Loading /></td>
                                 <td><Loading /></td>
                                 <td><Loading flipped /></td>
+                            </tr>
+                        }
+                        {
+                            sortedBatches.length === 0 && hydrated &&
+                            <tr>
+                                <td colSpan={7} className="text-center text-gray-500">Inga batcher</td>
                             </tr>
                         }
                         {sortedBatches.length > 0 && sortedBatches.map((batch: Batch, index) => (
