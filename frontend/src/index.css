@@ -48,8 +48,14 @@ body {
 	}
 }
 
+.msEdgeFixSigh {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+
 input[type="date"] {
 	height: 100%;
+	min-height: 2em;
 	width: 100%;
 	box-sizing: border-box;
 	padding: 0;
@@ -84,7 +90,7 @@ thead {
 }
 
 thead tr th {
-	@apply py-5 shadow-md;
+	@apply py-5 dark:shadow-md shadow shadow-slate-200 dark:shadow-black;
 }
 
 th {
@@ -102,6 +108,40 @@ td {
 
 td:first-child {
 	@apply border-l-0;
+}
+
+.borderFade {
+	@apply !border-opacity-0;
+}
+
+.fadeInTT {
+	animation: fadeInTT 0.1s ease-in-out forwards;
+}
+
+@keyframes fadeInTT {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.fadeOutTT {
+	animation: fadeOutTT 0.7s ease-in-out forwards;
+}
+
+@keyframes fadeOutTT {
+	0% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
 }
 
 /* td:nth-child(even) {

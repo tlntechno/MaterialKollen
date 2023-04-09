@@ -9,7 +9,6 @@ import { db } from '../firebase';
 import Loading from './Loading';
 import { Flipped, Flipper } from 'react-flip-toolkit';
 import { BsFillTrash3Fill } from 'react-icons/bs';
-import ProgressCircle from './Util/ProgressCircle';
 import { resetWriteBatch, useWriteBatch } from '../redux/useWriteBatch';
 import { useLine } from '../redux/useLine';
 
@@ -64,12 +63,12 @@ export default function MaterialTable() {
                 handleChange(batch, "archived", true, true);
             }
             setConfirmArchive("");
-        }, 1000);
+        }, 200);
         return () => clearTimeout(timeout);
     }, [confirmArchive, batches, handleChange])
 
-    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
-
+    // const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+    // console.log("isTouchDevice", isTouchDevice);
 
     return (
         <div className="p-5">
@@ -115,8 +114,10 @@ export default function MaterialTable() {
                         }
                         {sortedBatches.length > 0 && sortedBatches.map((batch: Batch, index) => (
                             <Flipped key={batch.id} flipId={batch.id}>
-                                <tr>
-                                    <td>
+                                <tr
+                                    className={`transition-opacity duration-200 ${confirmArchive === batch.id ? "opacity-5" : "opacity-100"}`}
+                                >
+                                    <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <textarea
                                             id={`batch-${batch.id}`}
                                             value={batch.batch}
@@ -125,7 +126,7 @@ export default function MaterialTable() {
                                             onChange={(e) => { handleChange(batch, "batch", e.target.value) }}
                                             className="resize-none font-semibold bg-transparent h-fit" />
                                     </td>
-                                    <td>
+                                    <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <textarea
                                             value={batch.country}
                                             placeholder="Land"
@@ -137,7 +138,7 @@ export default function MaterialTable() {
                                             }}
                                             className="resize-none text-center font-semibold bg-transparent h-fit" />
                                     </td>
-                                    <td>
+                                    <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <SegmentedControl
                                             options={[false, true]}
                                             selected={batch.to}
@@ -146,10 +147,10 @@ export default function MaterialTable() {
                                             />}
                                         />
                                     </td>
-                                    <td>
-                                        <input type="date" className={`w-full h-full bg-transparent`} onChange={(e) => { handleChange(batch, "plan", e.target.value) }} value={batch.plan} />
+                                    <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
+                                        <input type="date" title='Planerad start' placeholder='Planerad start' className={`w-full h-full bg-transparent`} onChange={(e) => { handleChange(batch, "plan", e.target.value) }} value={batch.plan} />
                                     </td>
-                                    <td>
+                                    <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <SegmentedControl
                                             options={[false, true]}
                                             selected={batch.etik}
@@ -159,7 +160,7 @@ export default function MaterialTable() {
                                             }
                                         />
                                     </td>
-                                    <td>
+                                    <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <SegmentedControl
                                             options={[false, true]}
                                             selected={batch.tp}
@@ -167,31 +168,33 @@ export default function MaterialTable() {
                                             icon={<BiCylinder className="fill-gray-800" />}
                                         />
                                     </td>
-                                    <td className='p-0 relative' id={"remove-" + batch.id}>
+                                    <td className={`p-0 relative msEdgeFixSigh ${confirmArchive === batch.id ? "borderFade" : ""}`} id={"remove-" + batch.id}>
                                         <button
-                                            onMouseDown={() => !confirmArchive && !isTouchDevice && batch.id && setConfirmArchive(batch.id)}
-                                            onMouseUp={() => confirmArchive && !isTouchDevice && setConfirmArchive("")}
+                                            // onMouseDown={() => {
+                                            //     !confirmArchive && !isTouchDevice && batch.id && setConfirmArchive(batch.id); console.log("onMouseDown")
+                                            // }}
+                                            // onMouseUp={() => confirmArchive && !isTouchDevice && setConfirmArchive("")}
                                             onPointerDown={(e) => {
                                                 e.preventDefault();
-                                                !confirmArchive && isTouchDevice && batch.id && setConfirmArchive(batch.id);
+                                                !confirmArchive && batch.id && setConfirmArchive(batch.id);
                                             }}
                                             onPointerUp={(e) => {
                                                 e.preventDefault();
-                                                confirmArchive && isTouchDevice && setConfirmArchive("");
+                                                confirmArchive && setConfirmArchive("");
                                             }}
-                                            className="relative full min-h-full py-4">
-                                            <div className="full flex flex-col justify-center items-center">
+                                            className="relative full min-h-full py-4 msEdgeFixSigh">
+                                            <div className="full flex flex-col justify-center items-center msEdgeFixSigh">
                                                 <BsFillTrash3Fill className='text-xl fill-red-500' />
                                             </div>
-                                            <div className={`absolute top-0 left-0 w-full h-full flex justify-center items-center transition-all duration-300 ${confirmArchive === batch.id ? "opacity-100" : "opacity-0"}`}>
+                                            {/* <div className={`absolute top-0 left-0 w-full h-full flex justify-center items-center transition-all duration-300 msEdgeFixSigh ${confirmArchive === batch.id ? "opacity-100" : "opacity-0"}`}>
                                                 <ProgressCircle
                                                     progress={confirmArchive === batch.id ? 100 : 0}
                                                     color="bg-blue-300"
                                                     size='sm'
                                                 />
-                                            </div>
+                                            </div> */}
                                         </button>
-                                        <div className={`absolute z-10 -top-3/4 right-3 w-[300%] py-1 px-2 accentBG3 border border-gray-800 h-fit flex justify-center items-center transition-all rounded-md pointer-events-none shadow-xl ${confirmArchive === batch.id ? "opacity-100" : "opacity-0"}`}>
+                                        <div className={`absolute z-10 -top-3/4 right-3 w-[300%] py-1 px-2 accentBG3 border border-gray-800 h-fit flex justify-center items-center rounded-md pointer-events-none shadow-xl ${confirmArchive === batch.id ? "fadeInTT" : "fadeOutTT"}`}>
                                             Håll in för att ta bort
                                         </div>
                                     </td>

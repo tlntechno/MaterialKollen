@@ -4,7 +4,7 @@ export default function smoothProgress({
     progress,
     currentProgress,
     setCurrentProgress,
-    delay = 9,
+    delay = 10,
     timeoutRef
 }
     :
