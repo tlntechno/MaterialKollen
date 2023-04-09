@@ -48,6 +48,17 @@ body {
 	}
 }
 
+input[type="date"] {
+	height: 100%;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+	font-size: inherit;
+	font-family: inherit;
+	line-height: inherit;
+}
+
 textarea:focus-visible,
 textarea:focus,
 input:focus-visible,

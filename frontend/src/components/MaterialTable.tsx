@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Batch, removeBatch, updateBatch, useBatches } from '../redux/useBatches'
 import { MdLocalShipping, MdVideoLabel } from 'react-icons/md'
 import { BiCylinder } from 'react-icons/bi'
@@ -146,7 +146,7 @@ export default function MaterialTable() {
                                             />}
                                         />
                                     </td>
-                                    <td className=''>
+                                    <td>
                                         <input type="date" className={`w-full h-full bg-transparent`} onChange={(e) => { handleChange(batch, "plan", e.target.value) }} value={batch.plan} />
                                     </td>
                                     <td>
@@ -171,11 +171,11 @@ export default function MaterialTable() {
                                         <button
                                             onMouseDown={() => !confirmArchive && !isTouchDevice && batch.id && setConfirmArchive(batch.id)}
                                             onMouseUp={() => confirmArchive && !isTouchDevice && setConfirmArchive("")}
-                                            onTouchStart={(e) => {
+                                            onPointerDown={(e) => {
                                                 e.preventDefault();
                                                 !confirmArchive && isTouchDevice && batch.id && setConfirmArchive(batch.id);
                                             }}
-                                            onTouchEnd={(e) => {
+                                            onPointerUp={(e) => {
                                                 e.preventDefault();
                                                 confirmArchive && isTouchDevice && setConfirmArchive("");
                                             }}
