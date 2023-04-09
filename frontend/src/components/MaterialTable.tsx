@@ -77,6 +77,8 @@ export default function MaterialTable() {
         }
     }, [confirmArchive])
 
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+
     return (
         <div className="p-5">
             <Flipper flipKey={sortedBatches.map((batch) => batch.id)}>
@@ -175,8 +177,16 @@ export default function MaterialTable() {
                                     </td>
                                     <td className='p-0 relative' id={"remove-" + batch.id}>
                                         <button
-                                            onMouseDown={() => !confirmArchive && batch.id && setConfirmArchive(batch.id)}
-                                            onMouseUp={() => confirmArchive && setConfirmArchive("")}
+                                            onMouseDown={() => !confirmArchive && !isTouchDevice && batch.id && setConfirmArchive(batch.id)}
+                                            onMouseUp={() => confirmArchive && !isTouchDevice && setConfirmArchive("")}
+                                            onTouchStart={(e) => {
+                                                e.preventDefault();
+                                                !confirmArchive && isTouchDevice && batch.id && setConfirmArchive(batch.id);
+                                            }}
+                                            onTouchEnd={(e) => {
+                                                e.preventDefault();
+                                                confirmArchive && isTouchDevice && setConfirmArchive("");
+                                            }}
                                             className="relative full min-h-full py-4">
                                             <div className="full flex flex-col justify-center items-center">
                                                 <BsFillTrash3Fill className='text-xl fill-red-500' />
