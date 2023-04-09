@@ -8,7 +8,6 @@ import { Line } from '../constants/lines';
 export default function Nav() {
     const line = useLine();
     const openBtnRef = useRef(null);
-    const closeTimeoutRef = useRef(null);
     const [changeLine, setChangeLine] = useState(false);
 
     useEffect(() => {
@@ -21,11 +20,6 @@ export default function Nav() {
         setChangeLine(prev => !prev);
     };
 
-    const handleClose = () => {
-        setChangeLine(false);
-        openBtnRef.current.focus();
-    };
-
     const handleBlur = (event: { relatedTarget: any; }) => {
         setTimeout(() => {
             const nextFocusedElement = event.relatedTarget;
@@ -35,21 +29,6 @@ export default function Nav() {
             setChangeLine(false);
         }, 0);
     };
-
-    // const handleBlur = (event: { currentTarget: { contains: (arg0: any) => any; }; relatedTarget: any; }) => {
-    //     console.log(event.currentTarget.contains(event.relatedTarget));
-
-    //     if (!event.currentTarget.contains(event.relatedTarget)) {
-    //         handleClose();
-    //     }
-    // };
-
-    // const handleMouseDown = () => {
-    //     if (closeTimeoutRef.current !== null) {
-    //         clearTimeout(closeTimeoutRef.current);
-    //         closeTimeoutRef.current = null;
-    //     }
-    // };
 
     return (
         <nav className='w-full p-3 mainBG shadow-lg h-[90px] select-none'>
