@@ -2,19 +2,57 @@ import { dbAddBatch } from '../redux/useBatches'
 import { FaPlus } from 'react-icons/fa'
 import { setLine, useLine } from '../redux/useLine';
 import { BiChevronDown } from 'react-icons/bi';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Line } from '../constants/lines';
 
 export default function Nav() {
     const line = useLine();
+    const openBtnRef = useRef(null);
+    const closeTimeoutRef = useRef(null);
     const [changeLine, setChangeLine] = useState(false);
 
     useEffect(() => {
         if (changeLine)
             document.getElementById('changeLine')?.focus();
     }, [changeLine])
+
+
+    const handleOpen = () => {
+        setChangeLine(prev => !prev);
+    };
+
+    const handleClose = () => {
+        setChangeLine(false);
+        openBtnRef.current.focus();
+    };
+
+    const handleBlur = (event: { relatedTarget: any; }) => {
+        setTimeout(() => {
+            const nextFocusedElement = event.relatedTarget;
+            if (nextFocusedElement === openBtnRef.current) {
+                return;
+            }
+            setChangeLine(false);
+        }, 0);
+    };
+
+    // const handleBlur = (event: { currentTarget: { contains: (arg0: any) => any; }; relatedTarget: any; }) => {
+    //     console.log(event.currentTarget.contains(event.relatedTarget));
+
+    //     if (!event.currentTarget.contains(event.relatedTarget)) {
+    //         handleClose();
+    //     }
+    // };
+
+    // const handleMouseDown = () => {
+    //     if (closeTimeoutRef.current !== null) {
+    //         clearTimeout(closeTimeoutRef.current);
+    //         closeTimeoutRef.current = null;
+    //     }
+    // };
+
     return (
-        <nav className='w-full p-3 mainBG shadow-lg h-[90px]'>
+        <nav className='w-full p-3 mainBG shadow-lg h-[90px] select-none'>
             <ul className='flex w-full h-full px-3'>
                 <li className='relative flex-1'><a href="/">
                     <h1 className='text-sm font-semibold flex items-start'>
@@ -38,10 +76,10 @@ export default function Nav() {
                     className='relative flex flex-1 text-3xl items-center justify-center'
 
                 >
-                    <div className='relative flex items-center cursor-pointer'
-                        onClick={() => {
-                            setChangeLine(prev => !prev);
-                        }}
+                    <button className='relative flex items-center cursor-pointer'
+                        onClick={handleOpen}
+                        // onMouseDown={handleMouseDown}
+                        ref={openBtnRef}
                     >
                         <h1>
                             {line}
@@ -49,12 +87,12 @@ export default function Nav() {
                         <p className='absolute right-0 translate-x-5'>
                             <BiChevronDown className={`text-xl transition-all ${changeLine ? "rotate-180" : ""}`} />
                         </p>
-                    </div>
+                    </button>
                     {changeLine && (
                         <div
                             id='changeLine'
                             className='absolute z-10 top-14 right-1/2 translate-x-1/2 w-34 accentBG rounded-md shadow-lg overflow-hidden'
-                            onBlur={() => setChangeLine(false)}
+                            onBlur={handleBlur}
                             tabIndex={0}
                         >
                             {Object.keys(Line).map((line) => (

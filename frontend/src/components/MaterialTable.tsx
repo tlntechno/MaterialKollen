@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Batch, removeBatch, updateBatch, useBatches } from '../redux/useBatches'
 import { MdLocalShipping, MdVideoLabel } from 'react-icons/md'
 import { BiCylinder } from 'react-icons/bi'
@@ -17,8 +17,6 @@ export default function MaterialTable() {
     const { batches, hydrated } = useBatches();
     const line = useLine();
     const { writeBatch, immediate } = useWriteBatch();
-
-    const [archiveBtnRect, setArchiveBtnRect] = useState<DOMRect>();
     const [confirmArchive, setConfirmArchive] = useState("");
 
     const sortedBatches = batches.sort((a, b) => {
@@ -70,14 +68,8 @@ export default function MaterialTable() {
         return () => clearTimeout(timeout);
     }, [confirmArchive, batches, handleChange])
 
-    useEffect(() => {
-        const removeButton = document.getElementById("remove-" + confirmArchive);
-        if (removeButton) {
-            setArchiveBtnRect(removeButton.getBoundingClientRect());
-        }
-    }, [confirmArchive])
-
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+
 
     return (
         <div className="p-5">
