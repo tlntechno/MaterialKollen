@@ -17,6 +17,9 @@ export default function MaterialTable() {
     const line = useLine();
     const { writeBatch, immediate } = useWriteBatch();
     const [confirmArchive, setConfirmArchive] = useState("");
+    const [isSwiping, setIsSwiping] = useState(false);
+    const [swipeStartX, setSwipeStartX] = useState(0);
+    const [swipeDistance, setSwipeDistance] = useState(0);
 
     const sortedBatches = batches.sort((a, b) => {
         if (a.plan < b.plan) return -1;
@@ -67,8 +70,56 @@ export default function MaterialTable() {
         return () => clearTimeout(timeout);
     }, [confirmArchive, batches, handleChange])
 
+
+
+    const handleTouchStart = (event: any) => {
+        event.stopPropagation();
+        setIsSwiping(true);
+        setSwipeStartX(event.touches[0].clientX);
+    };
+
+    const handleTouchMove = (event: any, batch: Batch) => {
+        event.stopPropagation();
+        if (!isSwiping) {
+            return;
+        }
+
+        const deltaX = event.touches[0].clientX - swipeStartX;
+        if (deltaX > 0) return;
+        setSwipeDistance(deltaX);
+
+        // Move the element using CSS transforms
+        // const tr = document.getElementById(`tr-${batch.id}`);
+        // if (!tr) return;
+        event.target.style.transform = `translateX(${deltaX}px)`;
+    };
+
+    const handleTouchEnd = (event: any, batch: Batch) => {
+        event.stopPropagation();
+        setIsSwiping(false);
+
+        // Check if the element has been swiped past a certain threshold
+        console.log(Math.abs(swipeDistance));
+
+        if (Math.abs(swipeDistance) > 100) {
+            removeBatch(batch);
+            handleChange(batch, "archived", true, true);
+        } else {
+            // Animate the element back to its original position
+            event.target.style.transition = 'transform 0.2s ease-in-out';
+            event.target.style.transform = 'translateX(0)';
+            setTimeout(() => {
+                event.target.style.transition = '';
+            }, 200);
+        }
+        setSwipeDistance(0);
+    };
+
     // const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
     // console.log("isTouchDevice", isTouchDevice);
+
+    console.log(isSwiping);
+
 
     return (
         <div className="p-5">
@@ -115,7 +166,8 @@ export default function MaterialTable() {
                         {sortedBatches.length > 0 && sortedBatches.map((batch: Batch, index) => (
                             <Flipped key={batch.id} flipId={batch.id}>
                                 <tr
-                                    className={`transition-opacity duration-200 ${confirmArchive === batch.id ? "opacity-5" : "opacity-100"}`}
+                                    id={`tr-${batch.id}`}
+                                    className={`transition-all duration-200 ${isSwiping ? "brightness-50" : ""}`}
                                 >
                                     <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <textarea
@@ -168,35 +220,24 @@ export default function MaterialTable() {
                                             icon={<BiCylinder className="fill-gray-800" />}
                                         />
                                     </td>
-                                    <td className={`p-0 relative msEdgeFixSigh ${confirmArchive === batch.id ? "borderFade" : ""}`} id={"remove-" + batch.id}>
+                                    <td className={`px-2 z-20 relative msEdgeFixSigh ${confirmArchive === batch.id ? "borderFade" : ""}`} id={"remove-" + batch.id}>
                                         <button
-                                            // onMouseDown={() => {
-                                            //     !confirmArchive && !isTouchDevice && batch.id && setConfirmArchive(batch.id); console.log("onMouseDown")
+                                            // onPointerDown={(e) => {
+                                            //     e.preventDefault();
+                                            //     !confirmArchive && batch.id && setConfirmArchive(batch.id);
                                             // }}
-                                            // onMouseUp={() => confirmArchive && !isTouchDevice && setConfirmArchive("")}
-                                            onPointerDown={(e) => {
-                                                e.preventDefault();
-                                                !confirmArchive && batch.id && setConfirmArchive(batch.id);
-                                            }}
-                                            onPointerUp={(e) => {
-                                                e.preventDefault();
-                                                confirmArchive && setConfirmArchive("");
-                                            }}
-                                            className="relative full min-h-full py-4 msEdgeFixSigh">
-                                            <div className="full flex flex-col justify-center items-center msEdgeFixSigh">
+                                            // onPointerUp={(e) => {
+                                            //     e.preventDefault();
+                                            //     confirmArchive && setConfirmArchive("");
+                                            // }}
+                                            onTouchStart={handleTouchStart}
+                                            onTouchMove={(e) => handleTouchMove(e, batch)}
+                                            onTouchEnd={(e) => handleTouchEnd(e, batch)}
+                                            className={`full min-h-full aspect-square rounded-md msEdgeFixSigh z-30 ${isSwiping && index % 2 === 0 ? "accentBG2 shadow-md" : "accentBG shadow-md"}`}>
+                                            <div className="full flex flex-col justify-center items-center msEdgeFixSigh pointer-events-none">
                                                 <BsFillTrash3Fill className='text-xl fill-red-500' />
                                             </div>
-                                            {/* <div className={`absolute top-0 left-0 w-full h-full flex justify-center items-center transition-all duration-300 msEdgeFixSigh ${confirmArchive === batch.id ? "opacity-100" : "opacity-0"}`}>
-                                                <ProgressCircle
-                                                    progress={confirmArchive === batch.id ? 100 : 0}
-                                                    color="bg-blue-300"
-                                                    size='sm'
-                                                />
-                                            </div> */}
                                         </button>
-                                        <div className={`absolute z-10 -top-3/4 right-3 w-[300%] py-1 px-2 accentBG3 border border-gray-800 h-fit flex justify-center items-center rounded-md pointer-events-none shadow-xl ${confirmArchive === batch.id ? "fadeInTT" : "fadeOutTT"}`}>
-                                            Håll in för att ta bort
-                                        </div>
                                     </td>
                                 </tr>
                             </Flipped>
