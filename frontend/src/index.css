@@ -90,7 +90,7 @@ thead {
 }
 
 thead tr th {
-	@apply py-5 dark:shadow-md shadow shadow-slate-200 dark:shadow-black;
+	@apply py-5 border tab;
 }
 
 th {
@@ -143,6 +143,23 @@ td:first-child {
 		opacity: 0;
 	}
 }
+
+.animateColors {
+	animation: animateColors ease-in-out infinite;
+	animation-delay: 0s;
+	animation-play-state: paused;
+	animation-duration: 1001ms;
+}
+
+@keyframes animateColors {
+	from {
+		@apply bg-transparent text-red-500;
+	}
+
+	to {
+		@apply bg-red-500 text-white;
+	}
+}
 tr:nth-child(odd) {
 	@apply accentBG;
 }
@@ -152,10 +169,10 @@ tr:nth-child(even) {
 }
 
 .removeOverlay {
-	@apply absolute full top-0 right-0 -z-10 pointer-events-none transition-opacity;
+	@apply absolute full w-[5000px] top-0 right-0 -z-10 pointer-events-none transition-opacity;
 }
 
 .removeOverlay::before {
 	content: "";
-	@apply full absolute block w-[5000px] -z-10 top-0 right-0 backdrop-blur-sm pointer-events-none;
+	@apply full absolute inset-0 block -z-10 backdrop-blur-sm backdrop-brightness-90 pointer-events-none;
 }

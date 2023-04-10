@@ -12,6 +12,17 @@ import { BsFillTrash3Fill } from 'react-icons/bs';
 import { resetWriteBatch, useWriteBatch } from '../redux/useWriteBatch';
 import { useLine } from '../redux/useLine';
 
+// Variables to determine sticky lengths for remove slider
+
+const startPos = 0;
+const endPos = 100;
+const removeTreshSticky = 80;
+const removeStickyPos = -100;
+const cancelTreshSticky = 20;
+const cancelStickyPos = 0;
+const removeDelay = 30;
+const cancelDelay = 30;
+
 export default function MaterialTable() {
     const { batches, hydrated } = useBatches();
     const line = useLine();
@@ -20,6 +31,7 @@ export default function MaterialTable() {
     const [isSwiping, setIsSwiping] = useState(false);
     const [swipeStartX, setSwipeStartX] = useState(0);
     const [swipeDistance, setSwipeDistance] = useState(0);
+    const [swipeStick, setSwipeStick] = useState(false);
 
     const sortedBatches = batches.sort((a, b) => {
         if (a.plan < b.plan) return -1;
@@ -84,28 +96,55 @@ export default function MaterialTable() {
             return;
         }
 
-        const deltaX = event.touches[0].clientX - swipeStartX;
-        if (deltaX > 0) return;
-        setSwipeDistance(deltaX);
 
-        // Move the element using CSS transforms
-        // const tr = document.getElementById(`tr-${batch.id}`);
-        // if (!tr) return;
-        event.target.style.transform = `translateX(${deltaX}px)`;
+
+        const deltaX = event.touches[0].clientX - swipeStartX;
+        const sd = () => {
+            if (deltaX > startPos) return 0;
+            if (Math.abs(deltaX) > endPos) return -endPos;
+            return Number(deltaX.toFixed(2));
+        }
+
+        console.log(sd() / 100)
+
+        event.target.style.animationDelay = `${sd() / 100}s`;
+
+        if (deltaX > startPos) return;
+        if (Math.abs(deltaX) > endPos) return;
+        if (Math.abs(deltaX) > removeTreshSticky) {
+            setSwipeStick(true);
+            event.target.style.transition = `transform ${removeDelay}ms ease-in`;
+            setSwipeDistance(removeStickyPos);
+            event.target.style.transform = `translateX(${removeStickyPos}px) scale(${1 + Math.abs(deltaX) / 2000})`;
+            event.target.style.boxShadow = '0 0 10px 0 rgba(0,0,0,0.5), 0 0 0 2px rgba(255, 255, 0, 0.5)'
+            return
+        }
+        if (swipeStick && Math.abs(deltaX) < cancelTreshSticky) {
+            setSwipeStick(true);
+            event.target.style.transition = `transform ${cancelDelay}ms ease-in`;
+            setSwipeDistance(cancelStickyPos);
+            event.target.style.transform = `translateX(${cancelStickyPos}px) scale(1)`;
+            event.target.style.boxShadow = 'none'
+            return
+        }
+        if (event.target.style.transition !== '') {
+            setTimeout(() => {
+                event.target.style.transition = '';
+            }, removeDelay + Math.abs(deltaX));
+        }
+        setSwipeDistance(deltaX);
+        event.target.style.transform = `translateX(${deltaX}px) scale(${1 + Math.abs(deltaX) / 2000})`;
+        event.target.style.boxShadow = 'none'
     };
 
     const handleTouchEnd = (event: any, batch: Batch) => {
         event.stopPropagation();
         setIsSwiping(false);
 
-        // Check if the element has been swiped past a certain threshold
-        console.log(Math.abs(swipeDistance));
-
-        if (Math.abs(swipeDistance) > 100) {
+        if (Math.abs(swipeDistance) > 200) {
             removeBatch(batch);
             handleChange(batch, "archived", true, true);
         } else {
-            // Animate the element back to its original position
             event.target.style.transition = 'transform 0.2s ease-in-out';
             event.target.style.transform = 'translateX(0)';
             setTimeout(() => {
@@ -114,12 +153,6 @@ export default function MaterialTable() {
         }
         setSwipeDistance(0);
     };
-
-    // const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
-    // console.log("isTouchDevice", isTouchDevice);
-
-    console.log(isSwiping);
-
 
     return (
         <div className="p-5">
@@ -223,20 +256,12 @@ export default function MaterialTable() {
                                     <td className={`px-2 z-20 relative msEdgeFixSigh ${confirmArchive === batch.id ? "borderFade" : ""}`} id={"remove-" + batch.id}>
 
                                         <button
-                                            // onPointerDown={(e) => {
-                                            //     e.preventDefault();
-                                            //     !confirmArchive && batch.id && setConfirmArchive(batch.id);
-                                            // }}
-                                            // onPointerUp={(e) => {
-                                            //     e.preventDefault();
-                                            //     confirmArchive && setConfirmArchive("");
-                                            // }}
                                             onTouchStart={handleTouchStart}
                                             onTouchMove={(e) => handleTouchMove(e, batch)}
                                             onTouchEnd={(e) => handleTouchEnd(e, batch)}
-                                            className={`full min-h-full aspect-square rounded-md msEdgeFixSigh z-30 ${isSwiping && index % 2 === 0 ? "accentBG2 shadow-md" : "accentBG shadow-md"}`}>
+                                            className={`full min-h-full aspect-square rounded-md animateColors msEdgeFixSigh z-30 ${isSwiping && index % 2 === 0 ? "accentBG2 shadow-md" : "accentBG shadow-md"}`}>
                                             <div className="full flex flex-col justify-center items-center msEdgeFixSigh pointer-events-none">
-                                                <BsFillTrash3Fill className='text-xl fill-red-500' />
+                                                <BsFillTrash3Fill className='text-xl' />
                                             </div>
                                         </button>
                                         <div className={`removeOverlay ${isSwiping ? "opacity-100" : "opacity-0"}`}>
@@ -248,17 +273,6 @@ export default function MaterialTable() {
                     </tbody>
                 </table>
             </Flipper>
-            {/* <div
-                id='archiveBtn'
-                className={`absolute p-2 flex accentBG2 w-fit border border-gray-800 justify-center items-center transition-all duration-300 ${confirmArchive !== "" ? "opacity-100" : "opacity-0"}`}
-                style={{
-                    // transform: `translate(${archiveBtnRect ? -archiveBtnRect.left : 0}px, ${archiveBtnRect ? -archiveBtnRect.top : 0}px)`
-                    transform: `translate(${archiveBtnRect.left - (document.getElementById("archiveBtn")?.offsetWidth / 2)}px, ${archiveBtnRect.top - document.getElementById("archiveBtn")?.offsetHeight}px)`
-
-                }}
-            >
-                Håll in för att ta bort
-            </div> */}
         </div>
     )
 }
