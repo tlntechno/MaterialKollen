@@ -114,7 +114,7 @@ export default function MaterialTable() {
             event.target.style.transition = `all ${removeDelay}ms ease-out`;
             setSwipeDistance(removeStickyPos);
             event.target.style.animationDelay = `-1s`;
-            event.target.style.transform = `translateX(${removeStickyPos}px) scale(${1 + Math.abs(deltaX) / 2000})`;
+            event.target.style.webkitTransform = `translate3d(${removeStickyPos}px, 0, 0) scale(${1 + Math.abs(deltaX) / 2000})`;
             event.target.style.boxShadow = '0 0 10px 0 rgba(0,0,0,0.5), 0 0 0 2px rgba(255, 255, 0, 0.5)'
             return
         }
@@ -133,7 +133,7 @@ export default function MaterialTable() {
         }
         setSwipeDistance(deltaX);
         event.target.style.animationDelay = `${sd() / 100}s`;
-        event.target.style.transform = `translateX(${deltaX}px) scale(${1 + Math.abs(deltaX) / 2000})`;
+        event.target.style.webkitTransform = `translate3d(${deltaX}px, 0, 0) scale(${1 + Math.abs(deltaX) / 2000})`;
         event.target.style.boxShadow = 'none'
     };
 
