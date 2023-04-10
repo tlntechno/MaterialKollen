@@ -16,7 +16,7 @@ import { useLine } from '../redux/useLine';
 
 const startPos = 0;
 const endPos = 100;
-const removeTreshSticky = 80;
+const removeTreshSticky = 60;
 const removeStickyPos = -100;
 const cancelTreshSticky = 20;
 const cancelStickyPos = 0;
@@ -99,13 +99,12 @@ export default function MaterialTable() {
 
 
         const deltaX = event.touches[0].clientX - swipeStartX;
+
         const sd = () => {
             if (deltaX > startPos) return 0;
             if (Math.abs(deltaX) > endPos) return -endPos;
             return Number(deltaX.toFixed(2));
         }
-
-        console.log(sd() / 100)
 
         event.target.style.animationDelay = `${sd() / 100}s`;
 
@@ -113,20 +112,20 @@ export default function MaterialTable() {
         if (Math.abs(deltaX) > endPos) return;
         if (Math.abs(deltaX) > removeTreshSticky) {
             setSwipeStick(true);
-            event.target.style.transition = `transform ${removeDelay}ms ease-in`;
+            event.target.style.transition = `all ${removeDelay}ms ease-in`;
             setSwipeDistance(removeStickyPos);
             event.target.style.transform = `translateX(${removeStickyPos}px) scale(${1 + Math.abs(deltaX) / 2000})`;
             event.target.style.boxShadow = '0 0 10px 0 rgba(0,0,0,0.5), 0 0 0 2px rgba(255, 255, 0, 0.5)'
             return
         }
-        if (swipeStick && Math.abs(deltaX) < cancelTreshSticky) {
-            setSwipeStick(true);
-            event.target.style.transition = `transform ${cancelDelay}ms ease-in`;
-            setSwipeDistance(cancelStickyPos);
-            event.target.style.transform = `translateX(${cancelStickyPos}px) scale(1)`;
-            event.target.style.boxShadow = 'none'
-            return
-        }
+        // if (swipeStick && Math.abs(deltaX) < cancelTreshSticky) {
+        //     setSwipeStick(true);
+        //     event.target.style.transition = `all ${cancelDelay}ms ease-in`;
+        //     setSwipeDistance(cancelStickyPos);
+        //     event.target.style.transform = `translateX(${cancelStickyPos}px) scale(1)`;
+        //     event.target.style.boxShadow = 'none'
+        //     return
+        // }
         if (event.target.style.transition !== '') {
             setTimeout(() => {
                 event.target.style.transition = '';
@@ -140,13 +139,15 @@ export default function MaterialTable() {
     const handleTouchEnd = (event: any, batch: Batch) => {
         event.stopPropagation();
         setIsSwiping(false);
+        event.target.style.animationDelay = `0s`;
 
-        if (Math.abs(swipeDistance) > 200) {
+        if (Math.abs(swipeDistance) === endPos) {
             removeBatch(batch);
             handleChange(batch, "archived", true, true);
         } else {
-            event.target.style.transition = 'transform 0.2s ease-in-out';
-            event.target.style.transform = 'translateX(0)';
+            event.target.style.transition = 'all 0.2s ease-in-out';
+            event.target.style.boxShadow = 'none'
+            event.target.style.transform = 'translateX(0) scale(1)';
             setTimeout(() => {
                 event.target.style.transition = '';
             }, 200);
