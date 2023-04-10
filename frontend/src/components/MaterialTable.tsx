@@ -17,7 +17,7 @@ import { FiChevronLeft } from 'react-icons/fi';
 
 const startPos = 0;
 const endPos = 100;
-const removeTreshSticky = 60;
+const removeTreshSticky = 30;
 const removeStickyPos = -100;
 const cancelTreshSticky = 20;
 const cancelStickyPos = 0;
