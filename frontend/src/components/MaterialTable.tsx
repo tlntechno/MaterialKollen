@@ -11,6 +11,7 @@ import { Flipped, Flipper } from 'react-flip-toolkit';
 import { BsFillTrash3Fill } from 'react-icons/bs';
 import { resetWriteBatch, useWriteBatch } from '../redux/useWriteBatch';
 import { useLine } from '../redux/useLine';
+import { FiChevronLeft } from 'react-icons/fi';
 
 // Variables to determine sticky lengths for remove slider
 
@@ -32,6 +33,7 @@ export default function MaterialTable() {
     const [swipeStartX, setSwipeStartX] = useState(0);
     const [swipeDistance, setSwipeDistance] = useState(0);
     const [swipeStick, setSwipeStick] = useState(false);
+    const [tooltip, setTooltip] = useState("");
 
     const sortedBatches = batches.sort((a, b) => {
         if (a.plan < b.plan) return -1;
@@ -87,10 +89,14 @@ export default function MaterialTable() {
     const handleTouchStart = (event: any) => {
         event.stopPropagation();
         setIsSwiping(true);
+        setTooltip("");
         setSwipeStartX(event.touches[0].clientX);
     };
 
     const handleTouchMove = (event: any, batch: Batch) => {
+        if (tooltip !== "") {
+            setTooltip("");
+        }
         event.stopPropagation();
         if (!isSwiping) {
             return;
@@ -106,7 +112,6 @@ export default function MaterialTable() {
             return Number(deltaX.toFixed(2));
         }
 
-        event.target.style.animationDelay = `${sd() / 100}s`;
 
         if (deltaX > startPos) return;
         if (Math.abs(deltaX) > endPos) return;
@@ -114,6 +119,7 @@ export default function MaterialTable() {
             setSwipeStick(true);
             event.target.style.transition = `all ${removeDelay}ms ease-in`;
             setSwipeDistance(removeStickyPos);
+            event.target.style.animationDelay = `-1s`;
             event.target.style.transform = `translateX(${removeStickyPos}px) scale(${1 + Math.abs(deltaX) / 2000})`;
             event.target.style.boxShadow = '0 0 10px 0 rgba(0,0,0,0.5), 0 0 0 2px rgba(255, 255, 0, 0.5)'
             return
@@ -132,6 +138,7 @@ export default function MaterialTable() {
             }, removeDelay + Math.abs(deltaX));
         }
         setSwipeDistance(deltaX);
+        event.target.style.animationDelay = `${sd() / 100}s`;
         event.target.style.transform = `translateX(${deltaX}px) scale(${1 + Math.abs(deltaX) / 2000})`;
         event.target.style.boxShadow = 'none'
     };
@@ -154,6 +161,15 @@ export default function MaterialTable() {
         }
         setSwipeDistance(0);
     };
+
+    useEffect(() => {
+        if (tooltip !== '') {
+            const timeout = setTimeout(() => {
+                setTooltip('')
+            }, 2800);
+            return () => clearTimeout(timeout);
+        }
+    }, [tooltip])
 
     return (
         <div className="p-5">
@@ -255,19 +271,32 @@ export default function MaterialTable() {
                                         />
                                     </td>
                                     <td className={`px-2 z-20 relative msEdgeFixSigh ${confirmArchive === batch.id ? "borderFade" : ""}`} id={"remove-" + batch.id}>
-
                                         <button
+                                            onClick={() => batch.id && setTooltip(batch.id)}
                                             onMouseDown={() => batch.id && setConfirmArchive(batch.id)}
                                             onMouseUp={() => batch.id && setConfirmArchive("")}
                                             onTouchStart={handleTouchStart}
                                             onTouchMove={(e) => handleTouchMove(e, batch)}
                                             onTouchEnd={(e) => handleTouchEnd(e, batch)}
-                                            className={`full min-h-full aspect-square rounded-md animateColors msEdgeFixSigh z-30 ${isSwiping && index % 2 === 0 ? "accentBG2 shadow-md" : "accentBG shadow-md"}`}>
+                                            className={`full min-h-full aspect-square rounded-md animateColors msEdgeFixSigh z-30 ${isSwiping && index % 2 === 0 ? "accentBG2" : "accentBG"}`}>
                                             <div className="full flex flex-col justify-center items-center msEdgeFixSigh pointer-events-none">
                                                 <BsFillTrash3Fill className='text-xl' />
                                             </div>
                                         </button>
                                         <div className={`removeOverlay ${isSwiping ? "opacity-100" : "opacity-0"}`}>
+                                        </div>
+                                        <div className={`tooltip ${tooltip === batch.id ? "opacity-100" : "opacity-0"}`}>
+                                            <div className="flex justify-evenly items-center text-3xl text-slate-400">
+                                                <FiChevronLeft className='text-lg' />
+                                                <FiChevronLeft className='text-xl' />
+                                                <FiChevronLeft className='text-2xl' />
+                                                <FiChevronLeft className='text-3xl' />
+                                            </div>
+                                            <div className={`${tooltip === batch.id ? "animateSwipe" : "opacity-0"} h-5/6 aspect-square bg-slate-300 rounded-md border-2 border-slate-600 transition-all`}>
+                                                <div className="full flex flex-col justify-center items-center msEdgeFixSigh pointer-events-none text-red-500">
+                                                    <BsFillTrash3Fill className='text-xl' />
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>

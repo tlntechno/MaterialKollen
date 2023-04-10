@@ -176,3 +176,41 @@ tr:nth-child(even) {
 	content: "";
 	@apply full absolute inset-0 block -z-10 backdrop-blur-sm backdrop-brightness-90 pointer-events-none;
 }
+
+.tooltip {
+	@apply absolute full w-[5000px] flex justify-end items-center font-semibold py-1 px-2.5 top-0 right-0 z-10 pointer-events-none transition-opacity whitespace-nowrap;
+}
+
+.tooltip::before {
+	content: "";
+	@apply full absolute inset-0 block -z-10 backdrop-blur-sm backdrop-brightness-90 pointer-events-none;
+}
+
+.animateSwipe {
+	animation: animateSwipe 1.5s cubic-bezier(0.47, 0.01, 0.34, 1.05) infinite;
+	animation-delay: 50ms;
+	transform: translateX(0);
+	opacity: 0;
+}
+
+@keyframes animateSwipe {
+	0% {
+		transform: translateX(0);
+		opacity: 0;
+	}
+
+	30% {
+		transform: translateX(0);
+		opacity: 1;
+	}
+
+	70% {
+		transform: translateX(-100px);
+		opacity: 1;
+	}
+
+	100% {
+		transform: translateX(-100px);
+		opacity: 0;
+	}
+}
