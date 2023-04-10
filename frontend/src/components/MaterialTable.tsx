@@ -93,6 +93,7 @@ export default function MaterialTable() {
     };
 
     const handleTouchMove = (event: any, batch: Batch) => {
+        console.time("touchmove")
         if (tooltip !== "") {
             setTooltip("");
         }
@@ -139,7 +140,10 @@ export default function MaterialTable() {
         event.target.style.animationDelay = `${sd() / 100}s`;
         event.target.style.transform = `translateX(${deltaX}px) scale(${1 + Math.abs(deltaX) / 2000})`;
         event.target.style.boxShadow = 'none'
+        console.timeEnd("touchmove")
+        console.timeLog("touchmove")
     };
+
 
     const handleTouchEnd = (event: any, batch: Batch) => {
         event.stopPropagation();
