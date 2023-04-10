@@ -78,7 +78,7 @@ export default function MaterialTable() {
                 handleChange(batch, "archived", true, true);
             }
             setConfirmArchive("");
-        }, 200);
+        }, 300);
         return () => clearTimeout(timeout);
     }, [confirmArchive, batches, handleChange])
 
@@ -201,7 +201,7 @@ export default function MaterialTable() {
                             <Flipped key={batch.id} flipId={batch.id}>
                                 <tr
                                     id={`tr-${batch.id}`}
-                                // className={`transition-all duration-200 ${isSwiping ? "brightness-50" : ""}`}
+                                    className={`transition-all duration-300 ${confirmArchive === batch.id ? "opacity-0" : "opacity-100"}`}
                                 >
                                     <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <textarea
@@ -257,6 +257,8 @@ export default function MaterialTable() {
                                     <td className={`px-2 z-20 relative msEdgeFixSigh ${confirmArchive === batch.id ? "borderFade" : ""}`} id={"remove-" + batch.id}>
 
                                         <button
+                                            onMouseDown={() => batch.id && setConfirmArchive(batch.id)}
+                                            onMouseUp={() => batch.id && setConfirmArchive("")}
                                             onTouchStart={handleTouchStart}
                                             onTouchMove={(e) => handleTouchMove(e, batch)}
                                             onTouchEnd={(e) => handleTouchEnd(e, batch)}
