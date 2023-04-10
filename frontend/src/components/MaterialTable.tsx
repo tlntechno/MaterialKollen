@@ -167,7 +167,7 @@ export default function MaterialTable() {
                             <Flipped key={batch.id} flipId={batch.id}>
                                 <tr
                                     id={`tr-${batch.id}`}
-                                    className={`transition-all duration-200 ${isSwiping ? "brightness-50" : ""}`}
+                                // className={`transition-all duration-200 ${isSwiping ? "brightness-50" : ""}`}
                                 >
                                     <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <textarea
@@ -221,6 +221,7 @@ export default function MaterialTable() {
                                         />
                                     </td>
                                     <td className={`px-2 z-20 relative msEdgeFixSigh ${confirmArchive === batch.id ? "borderFade" : ""}`} id={"remove-" + batch.id}>
+
                                         <button
                                             // onPointerDown={(e) => {
                                             //     e.preventDefault();
@@ -238,6 +239,8 @@ export default function MaterialTable() {
                                                 <BsFillTrash3Fill className='text-xl fill-red-500' />
                                             </div>
                                         </button>
+                                        <div className={`removeOverlay ${isSwiping ? "opacity-100" : "opacity-0"}`}>
+                                        </div>
                                     </td>
                                 </tr>
                             </Flipped>
