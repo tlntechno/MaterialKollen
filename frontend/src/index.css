@@ -178,7 +178,7 @@ tr:nth-child(even) {
 }
 
 .tooltip {
-	@apply absolute full w-[5000px] flex justify-end items-center font-semibold py-1 px-2.5 top-0 right-0 z-10 pointer-events-none transition-opacity whitespace-nowrap;
+	@apply absolute full w-[2000px] flex justify-end items-center font-semibold py-1 px-2.5 top-0 right-0 z-10 pointer-events-none transition-opacity whitespace-nowrap;
 }
 
 .tooltip::before {

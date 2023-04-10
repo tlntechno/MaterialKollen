@@ -17,12 +17,9 @@ import { FiChevronLeft } from 'react-icons/fi';
 
 const startPos = 0;
 const endPos = 100;
-const removeTreshSticky = 30;
+const removeTreshSticky = 60;
 const removeStickyPos = -100;
-const cancelTreshSticky = 20;
-const cancelStickyPos = 0;
 const removeDelay = 30;
-const cancelDelay = 30;
 
 export default function MaterialTable() {
     const { batches, hydrated } = useBatches();
@@ -41,7 +38,6 @@ export default function MaterialTable() {
     })
 
     const updateBatchDB = useCallback((batch: WriteBatch) => {
-        console.log("Updating batch")
         batch.commit();
         resetWriteBatch();
     }, [])
@@ -93,7 +89,6 @@ export default function MaterialTable() {
     };
 
     const handleTouchMove = (event: any, batch: Batch) => {
-        console.time("touchmove")
         if (tooltip !== "") {
             setTooltip("");
         }
@@ -116,7 +111,7 @@ export default function MaterialTable() {
         if (deltaX > startPos) return;
         if (Math.abs(deltaX) > endPos) return;
         if (Math.abs(deltaX) > removeTreshSticky) {
-            event.target.style.transition = `all ${removeDelay}ms ease-in`;
+            event.target.style.transition = `all ${removeDelay}ms ease-out`;
             setSwipeDistance(removeStickyPos);
             event.target.style.animationDelay = `-1s`;
             event.target.style.transform = `translateX(${removeStickyPos}px) scale(${1 + Math.abs(deltaX) / 2000})`;
@@ -134,14 +129,12 @@ export default function MaterialTable() {
         if (event.target.style.transition !== '') {
             setTimeout(() => {
                 event.target.style.transition = '';
-            }, removeDelay + Math.abs(deltaX));
+            }, removeDelay + 20);
         }
         setSwipeDistance(deltaX);
         event.target.style.animationDelay = `${sd() / 100}s`;
         event.target.style.transform = `translateX(${deltaX}px) scale(${1 + Math.abs(deltaX) / 2000})`;
         event.target.style.boxShadow = 'none'
-        console.timeEnd("touchmove")
-        console.timeLog("touchmove")
     };
 
 
