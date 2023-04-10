@@ -29,10 +29,9 @@ export default function MaterialTable() {
     const line = useLine();
     const { writeBatch, immediate } = useWriteBatch();
     const [confirmArchive, setConfirmArchive] = useState("");
-    const [isSwiping, setIsSwiping] = useState(false);
+    const [isSwiping, setIsSwiping] = useState("");
     const [swipeStartX, setSwipeStartX] = useState(0);
     const [swipeDistance, setSwipeDistance] = useState(0);
-    const [swipeStick, setSwipeStick] = useState(false);
     const [tooltip, setTooltip] = useState("");
 
     const sortedBatches = batches.sort((a, b) => {
@@ -86,9 +85,9 @@ export default function MaterialTable() {
 
 
 
-    const handleTouchStart = (event: any) => {
+    const handleTouchStart = (event: any, batch: Batch) => {
         event.stopPropagation();
-        setIsSwiping(true);
+        batch.id && setIsSwiping(batch.id);
         setTooltip("");
         setSwipeStartX(event.touches[0].clientX);
     };
@@ -116,7 +115,6 @@ export default function MaterialTable() {
         if (deltaX > startPos) return;
         if (Math.abs(deltaX) > endPos) return;
         if (Math.abs(deltaX) > removeTreshSticky) {
-            setSwipeStick(true);
             event.target.style.transition = `all ${removeDelay}ms ease-in`;
             setSwipeDistance(removeStickyPos);
             event.target.style.animationDelay = `-1s`;
@@ -145,7 +143,7 @@ export default function MaterialTable() {
 
     const handleTouchEnd = (event: any, batch: Batch) => {
         event.stopPropagation();
-        setIsSwiping(false);
+        setIsSwiping("");
         event.target.style.animationDelay = `0s`;
 
         if (Math.abs(swipeDistance) === endPos) {
@@ -275,7 +273,7 @@ export default function MaterialTable() {
                                             onClick={() => batch.id && setTooltip(batch.id)}
                                             onMouseDown={() => batch.id && setConfirmArchive(batch.id)}
                                             onMouseUp={() => batch.id && setConfirmArchive("")}
-                                            onTouchStart={handleTouchStart}
+                                            onTouchStart={(e) => handleTouchStart(e, batch)}
                                             onTouchMove={(e) => handleTouchMove(e, batch)}
                                             onTouchEnd={(e) => handleTouchEnd(e, batch)}
                                             className={`full min-h-full aspect-square rounded-md animateColors msEdgeFixSigh z-30 ${isSwiping && index % 2 === 0 ? "accentBG2" : "accentBG"}`}>
@@ -283,7 +281,7 @@ export default function MaterialTable() {
                                                 <BsFillTrash3Fill className='text-xl' />
                                             </div>
                                         </button>
-                                        <div className={`removeOverlay ${isSwiping ? "opacity-100" : "opacity-0"}`}>
+                                        <div className={`removeOverlay ${isSwiping === batch.id ? "opacity-100" : "opacity-0"}`}>
                                         </div>
                                         <div className={`tooltip ${tooltip === batch.id ? "opacity-100" : "opacity-0"}`}>
                                             <div className="flex justify-evenly items-center text-3xl text-slate-400">
