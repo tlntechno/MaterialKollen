@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Batch, removeBatch, updateBatch, useBatches } from '../redux/useBatches'
 import { MdLocalShipping, MdVideoLabel } from 'react-icons/md'
 import { BiCylinder } from 'react-icons/bi'
@@ -17,9 +17,9 @@ import { FiChevronLeft } from 'react-icons/fi';
 
 const startPos = 0;
 const endPos = 100;
-const removeTreshSticky = 60;
+const removeTreshSticky = 50;
 const removeStickyPos = -100;
-const removeDelay = 30;
+const removeDelay = 50;
 
 export default function MaterialTable() {
     const { batches, hydrated } = useBatches();
@@ -30,6 +30,8 @@ export default function MaterialTable() {
     const [swipeStartX, setSwipeStartX] = useState(0);
     const [swipeDistance, setSwipeDistance] = useState(0);
     const [tooltip, setTooltip] = useState("");
+    const rafRef = useRef(0);
+    const timeRef = useRef(0);
 
     const sortedBatches = batches.sort((a, b) => {
         if (a.plan < b.plan) return -1;
@@ -79,7 +81,18 @@ export default function MaterialTable() {
         return () => clearTimeout(timeout);
     }, [confirmArchive, batches, handleChange])
 
-
+    function paint({ transition = "", animationDelay = "", boxShadow = "", transform = "", target }: { transition?: string, animationDelay?: string, boxShadow?: string, transform?: string, target: any }) {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = requestAnimationFrame((time) => {
+            timeRef.current = time;
+            if (target) {
+                if (transition) target.style.transition = transition;
+                if (animationDelay) target.style.animationDelay = animationDelay;
+                if (boxShadow) target.style.boxShadow = boxShadow;
+                if (transform) target.style.transform = transform;
+            }
+        })
+    }
 
     const handleTouchStart = (event: any, batch: Batch) => {
         event.stopPropagation();
@@ -89,17 +102,18 @@ export default function MaterialTable() {
     };
 
     const handleTouchMove = (event: any, batch: Batch) => {
-        if (tooltip !== "") {
-            setTooltip("");
-        }
         event.stopPropagation();
-        if (!isSwiping) {
-            return;
-        }
-
-
-
+        if (tooltip !== "") setTooltip("");
+        if (!isSwiping) return;
         const deltaX = event.touches[0].clientX - swipeStartX;
+
+        // const btn = document.getElementById(`remove-${batch.id}`);
+        // if (btn) {
+        //     // get current transformed position of button compared to the starting position
+        //     const btnPos = Number(btn.style.transform.replace(/translate3d\(/, '').replace(/px, 0px, 0px\)/, ''));
+        //     console.log(btnPos)
+
+        // }
 
         const sd = () => {
             if (deltaX > startPos) return 0;
@@ -107,53 +121,59 @@ export default function MaterialTable() {
             return Number(deltaX.toFixed(2));
         }
 
-
         if (deltaX > startPos) return;
         if (Math.abs(deltaX) > endPos) return;
         if (Math.abs(deltaX) > removeTreshSticky) {
-            event.target.style.transition = `all ${removeDelay}ms ease-out`;
             setSwipeDistance(removeStickyPos);
-            event.target.style.animationDelay = `-1s`;
-            event.target.style.webkitTransform = `translate3d(${removeStickyPos}px, 0, 0) scale(${1 + Math.abs(deltaX) / 2000})`;
-            event.target.style.boxShadow = '0 0 10px 0 rgba(0,0,0,0.5), 0 0 0 2px rgba(255, 255, 0, 0.5)'
+            paint({
+                target: event.target,
+                transition: `all ${removeDelay}ms ease-out`,
+                animationDelay: `-1s`,
+                boxShadow: '0 0 10px 0 rgba(0,0,0,0.5), 0 0 0 2px rgba(255, 255, 0, 0.5)',
+                transform: `translate3d(${removeStickyPos}px, 0, 0) scale(${1 + Math.abs(deltaX) / 2000})`
+            })
             return
         }
-        // if (swipeStick && Math.abs(deltaX) < cancelTreshSticky) {
-        //     setSwipeStick(true);
-        //     event.target.style.transition = `all ${cancelDelay}ms ease-in`;
-        //     setSwipeDistance(cancelStickyPos);
-        //     event.target.style.transform = `translateX(${cancelStickyPos}px) scale(1)`;
-        //     event.target.style.boxShadow = 'none'
-        //     return
-        // }
         if (event.target.style.transition !== '') {
             setTimeout(() => {
-                event.target.style.transition = '';
-            }, removeDelay + 20);
+                paint({
+                    target: event.target,
+                    transition: ''
+                })
+            }, removeDelay + 10);
         }
         setSwipeDistance(deltaX);
-        event.target.style.animationDelay = `${sd() / 100}s`;
-        event.target.style.webkitTransform = `translate3d(${deltaX}px, 0, 0) scale(${1 + Math.abs(deltaX) / 2000})`;
-        event.target.style.boxShadow = 'none'
+        paint({
+            target: event.target,
+            animationDelay: `${sd() / 100}s`,
+            boxShadow: 'none',
+            transform: `translate3d(${deltaX}px, 0, 0) scale(${1 + Math.abs(deltaX) / 2000})`
+        })
     };
 
 
     const handleTouchEnd = (event: any, batch: Batch) => {
         event.stopPropagation();
         setIsSwiping("");
-        event.target.style.animationDelay = `0s`;
 
         if (Math.abs(swipeDistance) === endPos) {
             removeBatch(batch);
             handleChange(batch, "archived", true, true);
         } else {
-            event.target.style.transition = 'all 0.2s ease-in-out';
-            event.target.style.boxShadow = 'none'
-            event.target.style.transform = 'translateX(0) scale(1)';
+            // event.target.style.transition = 'all 0.2s ease-in-out';
+            // event.target.style.boxShadow = 'none'
+            // event.target.style.transform = 'translateX(0) scale(1)';
+            paint({
+                target: event.target,
+                transition: 'all 0.2s ease-in-out',
+                boxShadow: 'none',
+                transform: 'translateX(0) scale(1)'
+            })
             setTimeout(() => {
                 event.target.style.transition = '';
             }, 200);
         }
+        event.target.style.animationDelay = `0s`;
         setSwipeDistance(0);
     };
 
