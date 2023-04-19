@@ -98,8 +98,10 @@ th {
 }
 
 tr td:nth-child(5),
-tr td:nth-child(6) {
-	@apply text-right;
+tr td:nth-child(6),
+tr th:nth-child(5),
+tr th:nth-child(6) {
+	@apply bg-green-500 bg-opacity-10;
 }
 
 td {
@@ -174,7 +176,7 @@ tr:nth-child(even) {
 
 .removeOverlay::before {
 	content: "";
-	@apply full absolute inset-0 block -z-10 backdrop-blur-sm backdrop-brightness-90 pointer-events-none;
+	@apply full absolute inset-0 block -z-10 backdrop-blur-sm backdrop-brightness-90 pointer-events-none transition-opacity;
 }
 
 .tooltip {

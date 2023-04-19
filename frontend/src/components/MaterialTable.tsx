@@ -31,7 +31,6 @@ export default function MaterialTable() {
     const [swipeDistance, setSwipeDistance] = useState(0);
     const [tooltip, setTooltip] = useState("");
     const rafRef = useRef(0);
-    const timeRef = useRef(0);
 
     const sortedBatches = batches.sort((a, b) => {
         if (a.plan < b.plan) return -1;
@@ -82,12 +81,16 @@ export default function MaterialTable() {
     }, [confirmArchive, batches, handleChange])
 
     function paint({ transition = "", animationDelay = "", boxShadow = "", transform = "", target }: { transition?: string, animationDelay?: string, boxShadow?: string, transform?: string, target: any }) {
+        if (!target) return;
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame((time) => {
-            timeRef.current = time;
+        rafRef.current = requestAnimationFrame(() => {
+            const btnPos = getComputedStyle(target).transform;
+            const x = new DOMMatrix(btnPos).m41;
+            const compAnimDelay = x / 100 + 's';
+
             if (target) {
                 if (transition) target.style.transition = transition;
-                if (animationDelay) target.style.animationDelay = animationDelay;
+                target.style.animationDelay = animationDelay ? animationDelay : compAnimDelay;
                 if (boxShadow) target.style.boxShadow = boxShadow;
                 if (transform) target.style.transform = transform;
             }
@@ -107,20 +110,6 @@ export default function MaterialTable() {
         if (!isSwiping) return;
         const deltaX = event.touches[0].clientX - swipeStartX;
 
-        // const btn = document.getElementById(`remove-${batch.id}`);
-        // if (btn) {
-        //     // get current transformed position of button compared to the starting position
-        //     const btnPos = Number(btn.style.transform.replace(/translate3d\(/, '').replace(/px, 0px, 0px\)/, ''));
-        //     console.log(btnPos)
-
-        // }
-
-        const sd = () => {
-            if (deltaX > startPos) return 0;
-            if (Math.abs(deltaX) > endPos) return -endPos;
-            return Number(deltaX.toFixed(2));
-        }
-
         if (deltaX > startPos) return;
         if (Math.abs(deltaX) > endPos) return;
         if (Math.abs(deltaX) > removeTreshSticky) {
@@ -128,24 +117,21 @@ export default function MaterialTable() {
             paint({
                 target: event.target,
                 transition: `all ${removeDelay}ms ease-out`,
-                animationDelay: `-1s`,
                 boxShadow: '0 0 10px 0 rgba(0,0,0,0.5), 0 0 0 2px rgba(255, 255, 0, 0.5)',
                 transform: `translate3d(${removeStickyPos}px, 0, 0) scale(${1 + Math.abs(deltaX) / 2000})`
             })
             return
         }
+
         if (event.target.style.transition !== '') {
             setTimeout(() => {
-                paint({
-                    target: event.target,
-                    transition: ''
-                })
+                console.log("removing transition")
+                event.target.style.transition = '';
             }, removeDelay + 10);
         }
         setSwipeDistance(deltaX);
         paint({
             target: event.target,
-            animationDelay: `${sd() / 100}s`,
             boxShadow: 'none',
             transform: `translate3d(${deltaX}px, 0, 0) scale(${1 + Math.abs(deltaX) / 2000})`
         })
@@ -160,20 +146,17 @@ export default function MaterialTable() {
             removeBatch(batch);
             handleChange(batch, "archived", true, true);
         } else {
-            // event.target.style.transition = 'all 0.2s ease-in-out';
-            // event.target.style.boxShadow = 'none'
-            // event.target.style.transform = 'translateX(0) scale(1)';
             paint({
                 target: event.target,
                 transition: 'all 0.2s ease-in-out',
                 boxShadow: 'none',
-                transform: 'translateX(0) scale(1)'
+                transform: 'translateX(0) scale(1)',
+                animationDelay: '0s'
             })
             setTimeout(() => {
                 event.target.style.transition = '';
             }, 200);
         }
-        event.target.style.animationDelay = `0s`;
         setSwipeDistance(0);
     };
 
@@ -203,7 +186,7 @@ export default function MaterialTable() {
                         <tr>
                             <th>Batch</th>
                             <th>Land</th>
-                            <th>TO-lagt</th>
+                            <th>Beställt</th>
                             <th>Planerad start</th>
                             <th>Etiketter</th>
                             <th>Täckpapper</th>
@@ -267,7 +250,7 @@ export default function MaterialTable() {
                                     <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <input type="date" title='Planerad start' placeholder='Planerad start' className={`w-full h-full bg-transparent`} onChange={(e) => { handleChange(batch, "plan", e.target.value) }} value={batch.plan} />
                                     </td>
-                                    <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
+                                    <td className={`${confirmArchive === batch.id ? "borderFade " : ""}`}>
                                         <SegmentedControl
                                             options={[false, true]}
                                             selected={batch.etik}
@@ -276,6 +259,7 @@ export default function MaterialTable() {
                                                 <MdVideoLabel className="fill-gray-800" />
                                             }
                                         />
+
                                     </td>
                                     <td className={`${confirmArchive === batch.id ? "borderFade" : ""}`}>
                                         <SegmentedControl
@@ -293,12 +277,13 @@ export default function MaterialTable() {
                                             onTouchStart={(e) => handleTouchStart(e, batch)}
                                             onTouchMove={(e) => handleTouchMove(e, batch)}
                                             onTouchEnd={(e) => handleTouchEnd(e, batch)}
+                                            onTransitionEnd={(e) => paint({ target: e.target })}
                                             className={`full min-h-full aspect-square rounded-md animateColors msEdgeFixSigh z-30 ${isSwiping && index % 2 === 0 ? "accentBG2" : "accentBG"}`}>
                                             <div className="full flex flex-col justify-center items-center msEdgeFixSigh pointer-events-none">
                                                 <BsFillTrash3Fill className='text-xl' />
                                             </div>
                                         </button>
-                                        <div className={`removeOverlay ${isSwiping === batch.id ? "opacity-100" : "opacity-0"}`}>
+                                        <div className={`removeOverlay ${isSwiping === batch.id ? "before:opacity-100" : "before:opacity-0"}`}>
                                         </div>
                                         <div className={`tooltip ${tooltip === batch.id ? "opacity-100" : "opacity-0"}`}>
                                             <div className="flex justify-evenly items-center text-3xl text-slate-400">
